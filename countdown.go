@@ -154,10 +154,10 @@ func minuteTimer(logger *zap.Logger, ctx context.Context, d time.Duration) (<-ch
 				return
 			}
 			minutes := formatMinutes(totalMinutes)
-			out <- minutes
 			if totalMinutes <= 0 {
 				break
 			}
+			out <- minutes
 			wf := waitFor(totalMinutes)
 			totalMinutes -= wf
 			logger.Debug("sleeping", zap.Duration("sleep_duration", wf))
