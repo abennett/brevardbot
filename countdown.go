@@ -91,21 +91,17 @@ func (cd *countdowns) countdown(c tele.Context) error {
 		logger.Error("failed to create timer", zap.Error(err))
 		return err
 	}
-	<-ch //skip first
 	if err = c.Send(fmt.Sprintf("Starting countdown from %s. #%s", payload, id)); err != nil {
 		logger.Error("failed sending message", zap.Error(err))
 		return err
 	}
+	<-ch //skip first
 	for notify := range ch {
 		logger.Debug("emitting", zap.String("duration", notify))
 		if err = c.Send(notify); err != nil {
 			logger.Error("failed sending message", zap.Error(err))
 			return err
 		}
-	}
-	if err = c.Send("🏁"); err != nil {
-		logger.Error("failed sending message", zap.Error(err))
-		return err
 	}
 	logger.Info("finishing request")
 	return nil
@@ -152,12 +148,14 @@ func minuteTimer(logger *zap.Logger, ctx context.Context, d time.Duration) (<-ch
 	go func() {
 		totalMinutes := d.Truncate(time.Minute)
 		for {
+			// stop and close goroutine if canceled
 			if ctx.Err() != nil {
-				break
+                close(out)
+				return
 			}
 			minutes := formatMinutes(totalMinutes)
 			out <- minutes
-			if totalMinutes <= time.Minute {
+			if totalMinutes <= 0 {
 				break
 			}
 			wf := waitFor(totalMinutes)
@@ -165,6 +163,7 @@ func minuteTimer(logger *zap.Logger, ctx context.Context, d time.Duration) (<-ch
 			logger.Debug("sleeping", zap.Duration("sleep_duration", wf))
 			time.Sleep(wf)
 		}
+		out <- "🏁"
 		close(out)
 	}()
 	return out, nil
