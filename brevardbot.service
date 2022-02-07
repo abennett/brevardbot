@@ -1,0 +1,12 @@
+[Unit]
+Description=BrevardBot
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+EnvironmentalFile=/etc/brevardbot/envvars
+ExecStart=/usr/local/sbin/brevardbot
+
+[Install]
+WantedBy=multi-user.target
