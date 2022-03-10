@@ -80,7 +80,9 @@ func (cd *countdowns) countdown(c tele.Context) error {
 		zap.String("total_duration", payload),
 	)
 	ctx, cancel := context.WithCancel(cd.ctx)
+	defer cancel()
 	cd.put(id, cancel)
+	defer cd.stop(id)
 	ch, err := minuteTimer(logger, ctx, d)
 	if err != nil {
 		logger.Error("failed to create timer", zap.Error(err))
@@ -145,7 +147,7 @@ func minuteTimer(logger *zap.Logger, ctx context.Context, d time.Duration) (<-ch
 		for {
 			// stop and close goroutine if canceled
 			if ctx.Err() != nil {
-                close(out)
+				close(out)
 				return
 			}
 			minutes := formatMinutes(totalMinutes)
