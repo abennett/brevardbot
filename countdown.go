@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -32,11 +30,8 @@ func init() {
 }
 
 func smallID() string {
-	builder := strings.Builder{}
-	for _, n := range rand.Perm(3) {
-		builder.WriteString(strconv.Itoa(n))
-	}
-	return builder.String()
+	id := rand.Intn(999)
+	return fmt.Sprintf("%03d", id)
 }
 
 type countdowns struct {
