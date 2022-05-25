@@ -25,12 +25,16 @@ var nextEmitTests = []struct {
 		input:    3 * time.Minute,
 		expected: 1 * time.Minute,
 	},
+	{
+		input:    21 * time.Minute,
+		expected: 10 * time.Minute,
+	},
 }
 
 func TestNextEmit(t *testing.T) {
 	for _, et := range nextEmitTests {
 		if result := waitFor(et.input); result != et.expected {
-			t.Errorf("expected: %s receieved: %s", et.expected, result)
+			t.Errorf("From %d\n\texpected: %s\n\treceieved: %s", et.input/time.Minute, et.expected, result)
 		}
 	}
 }

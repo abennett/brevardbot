@@ -16,13 +16,20 @@ const (
 	noMoreThan = 60 * time.Minute
 	noLessThan = 1 * time.Minute
 
-	fiveMin     = 5 * time.Minute
-	minuteLimit = 10 * time.Minute
+	oneMin    = time.Minute
+	fiveMin   = 5 * time.Minute
+	tenMin    = 10 * time.Minute
+	twentyMin = 20 * time.Minute
 )
 
 var (
 	errDurationTooLong  = errors.New("provided timespan is too long")
 	errDurationTooShort = errors.New("provided timespan is too short")
+
+	minuteRanges = [][]time.Duration{
+		{twentyMin, tenMin},
+		{tenMin, fiveMin},
+	}
 )
 
 func init() {
@@ -71,6 +78,9 @@ func (cd *countdowns) countdown(c tele.Context) error {
 	id := smallID()
 	logger := cd.logger.With(zap.String("request_id", id))
 	payload := c.Message().Payload
+    if payload == "" {
+        c.Send("Please provide a countdown duration. (ex. 9m)")
+    }
 	d, err := time.ParseDuration(c.Message().Payload)
 	if err != nil {
 		logger.Error("request not in duration format", zap.String("payload", payload))
@@ -124,14 +134,16 @@ func formatMinutes(d time.Duration) string {
 }
 
 func waitFor(d time.Duration) time.Duration {
-	if d > minuteLimit {
-		if d-fiveMin < minuteLimit {
-			return d - minuteLimit
-		} else {
-			return fiveMin
+	for _, mins := range minuteRanges {
+		if d <= mins[0] {
+			continue
 		}
+		if d-mins[1] < tenMin {
+			return d - tenMin
+		}
+		return mins[1]
 	}
-	return time.Minute
+	return oneMin
 }
 
 func minuteTimer(logger *zap.Logger, ctx context.Context, d time.Duration) (<-chan string, error) {
